@@ -1,5 +1,7 @@
 import unsigned
 
+{.push checks: off.}
+
 proc ones*[T: TInteger](): T =
   ## Returns an integer of the given size with all bits as one
   ##
@@ -57,6 +59,27 @@ proc revBits*[T: TInteger](i: T): T =
              ((result and cast[T](0xFFFF0000FFFF0000'i64)) shr 32)
     echo result
 
+# checks really need to be off here
+# ensures that the discriminator is ignored
+{.push checks: off.}
+type
+  EndianTest = object
+    case kind: bool
+      of true:
+        a: uint32
+      of false:
+        b: array[4, uint8]
+
+proc isBigEndianMachine*: bool =
+  let test = EndianTest(kind : true, a : 0x01020304)
+  return test.b[0] == 1
+
+proc isLittleEndianMachine*: bool =
+  let test = EndianTest(kind : true, a : 0x01020304)
+  return test.b[0] == 4
+{.pop.}
+
+{.pop.}
 
 when isMainModule:
   # signed ones integers
