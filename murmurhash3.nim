@@ -4,6 +4,7 @@ import bitutils, unsigned
 ## to the official implementation, but is factored into methods to be easy
 ## to use for hashing non-strings
 
+# Implementation {{{
 type
   IntermediateHash = uint32
 
@@ -49,6 +50,9 @@ proc finalize(hash: IntermediateHash): IntermediateHash =
   result *= 0xC2B2AE35'u32
   result  = result xor (result shr 16)
 
+# }}}
+
+
 proc hash*(data: string, seed: int32): IntermediateHash =
   result = initHash(seed)
   let blocks = data.len div 4
@@ -70,7 +74,7 @@ proc hash*(data: string, seed: int32): IntermediateHash =
       lastElem = blocks * 4
     if extraBytes >= 3: nextBlock = nextBlock xor (int32 ord(data[lastElem+2]) shl 16)
     if extraBytes >= 2: nextBlock = nextBlock xor (int32 ord(data[lastElem+1]) shl 8 )
-    if extraBytes >= 1: nextBlock = nextBlock xor (int32 ord(data[lastElem])         )
+    if extraBytes >= 1: nextBlock = nextBlock xor (int32 ord(data[lastElem  ])       )
     result = result.mixLast(nextBlock, data.len)
 
   result = result.finalize()

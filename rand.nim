@@ -1,45 +1,48 @@
-import unsigned
+import unsigned, math, bitutils
 
 type
   Random* = generic x
-    x.next() is uint64
-    x.nextU8() is uint8  # Used to avoid consuming unneeded randomness
+    next(var x) is uint64
 
-proc next*[T](self: var T, n: Int): Int =
+proc next*[T](self: var T, n: int): int =
   ## Gets a random number in [0, n). This wastes entropy, so it should
   ## be used with caution in cases where randomness can be exhausted
   assert n > 0
-  # Roughly based on http://stackoverflow.com/a/17554531/2299084
+  
+  if (n and (n-1)) == 0: # Will return true if n is a power of 2
+    # Mask is calculated as n-1. We know n is a bitstring where a single bit is
+    # set, so
+    #   0010 0000
+    # - 0000 0001
+    # = 0001 1111
+    return (self.next() and (n - 1).uint64).int
+
   let
-    buckets = 0xFFFF_FFFF_FFFF_FFFF'u64 div uint(n)
-    limit = buckets * uint(n)
-
+    excess = high(int) mod n  # n > 0
+    limit = high(int) - excess
+  
   while true:
-    result = int(self.next())
-    if uint64(result) < limit: break
+    let res = self.next().int shr 1  # Discard the sign
+    if res < limit:
+      result = res mod n
+      assert result < n
+      assert result >= 0
+      break
+  
+import unittest, xorshift, strutils
+var state = seed([578247, 39337, 675246, 1567546723, 2390230])
+for i in 0 .. 10000:
+  discard state.next()
+var buckets: array[0..999, int]
+for i in 1..200000000:
+  inc buckets[state.next(1000)]
 
-  result = int(uint64(result) div buckets)
 
-when isMainModule:
-  import xorshift
-  import unittest
-  var a1, a2, b1, b2 = 0
-  for i in 200..400:
-    block:
-      var state = seed(@[i.int8, 24i8, 52i8, 56i8, 22i8, 99i8])
-      var buckets: array[0..99999, int]
-      for i in 1..20000000:
-        inc buckets[state.next(100000)]
-      a1 += buckets[0]
-      a2 += buckets[99999]
-
-    block:
-      var state = seed(@[i.int8, 24i8, 52i8, 56i8, 22i8, 99i8])
-      var buckets: array[0..99999, int]
-      for i in 1..20000000:
-        let b: int = (state.next mod 100000).int
-        inc buckets[b]
-      b1 += buckets[0]
-      b2 += buckets[99999]
-  echo a1, " ", a2
-  echo b1, " ", b2
+var
+  chiSquare = 0.0
+  mean = 200_000
+for i, elem in buckets:
+  let part = ((elem-mean)*(elem-mean))/mean
+  chiSquare += part
+assert chiSquare < 1143.9169
+echo chiSquare.int

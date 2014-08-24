@@ -10,7 +10,7 @@ proc ones*[T: TInteger](): T =
   ##  assert(ones[uint16]() == 0xFFFF'u16)
   T(0xFFFFFFFFFFFFFFFF'u64)
 
-proc rotl*[T: TInteger](i: T, distance: BiggestInt): T =
+proc rotl*[T: TInteger](i: T, distance: int): T =
   ## Rotates the integer ``i`` left ``distance`` times. This is an unsigned
   ## operation, the sign bit is rotated like any other bit.
   ## .. code-block:: Nimrod
@@ -20,7 +20,7 @@ proc rotl*[T: TInteger](i: T, distance: BiggestInt): T =
   ##   assert (432 rotl -2) == (432 rotr 2)
   return (i shl T(distance)) or (i shr T((sizeof(T)*8)-distance))
 
-proc rotr*[T: TInteger](i: T, distance: BiggestInt): T =
+proc rotr*[T: TInteger](i: T, distance: int): T =
   ## Rotates the integer ``i`` right ``distance`` times. This is an unsigned
   ## operation, the sign bit is rotated like any other bit.
   ## .. code-block:: Nimrod
@@ -58,26 +58,6 @@ proc revBits*[T: TInteger](i: T): T =
     result = ((result and cast[T](0x0000FFFF0000FFFF'i64)) shl 32) or
              ((result and cast[T](0xFFFF0000FFFF0000'i64)) shr 32)
     echo result
-
-# checks really need to be off here
-# ensures that the discriminator is ignored
-{.push checks: off.}
-type
-  EndianTest = object
-    case kind: bool
-      of true:
-        a: uint32
-      of false:
-        b: array[4, uint8]
-
-proc isBigEndianMachine*: bool =
-  let test = EndianTest(kind : true, a : 0x01020304)
-  return test.b[0] == 1
-
-proc isLittleEndianMachine*: bool =
-  let test = EndianTest(kind : true, a : 0x01020304)
-  return test.b[0] == 4
-{.pop.}
 
 {.pop.}
 
