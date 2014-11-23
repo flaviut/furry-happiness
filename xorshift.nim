@@ -22,6 +22,6 @@ proc next*(state: var Xorshift1024): uint64 =
   state.data[state.pos] = nextv
   return uint64(nextv) * 1181783497276652981u64
 
-proc seed*(arr: array[16, int64]): Xorshift1024 =
-  result.data = arr
+proc seed*(arr: array[16, int]): Xorshift1024 =
+  result.data = cast[array[16, int64]](arr)
   result.pos = 0
